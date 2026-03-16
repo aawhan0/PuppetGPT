@@ -52,7 +52,6 @@ if uploaded_files:
 
 if uploaded_files:
 
-    st.cache_resource.clear()
 
     # clear old data
     if os.path.exists("vectorstore"):
@@ -135,7 +134,6 @@ def get_vectorstore():
         )
     return vectorstore
 
-@st.cache_resource
 def get_qa_chain():
 
     vectorstore = get_vectorstore()
