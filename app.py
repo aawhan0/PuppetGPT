@@ -72,36 +72,6 @@ if uploaded_files:
             f.write(file.read())
 
     st.success(f"{len(uploaded_files)} PDFs uploaded successfully!")
-# -------------------------
-# Vectorstore Builder
-# -------------------------
-
-def get_vectorstore(pdf_path):
-
-    docs = []
-    for file in os.listdir("uploaded_docs"):
-        loader = PyPDFLoader(os.path.join("uploaded_docs", file))
-        docs.extend(loader.load())
-
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-
-    chunks = splitter.split_documents(docs)
-
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-
-    vectorstore = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory="vectorstore"
-    )
-
-    return vectorstore
-
 
 # -------------------------
 # Prompt Template
@@ -133,15 +103,17 @@ qa_prompt = PromptTemplate(
 # QA Chain
 # -------------------------
 
-@st.cache_resource
 def get_vectorstore():
 
     docs = []
 
     for file in os.listdir("uploaded_docs"):
-
         loader = PyPDFLoader(os.path.join("uploaded_docs", file))
         docs.extend(loader.load())
+
+    if len(docs) == 0:
+        st.error("No documents were loaded.")
+        return None
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -154,18 +126,21 @@ def get_vectorstore():
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    vectorstore = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory="vectorstore"
-    )
-
+    os.makedirs("vectorstore", exist_ok=True)
+    with st.spinner("Building document index..."):
+        vectorstore = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory="vectorstore"
+        )
     return vectorstore
 
 @st.cache_resource
 def get_qa_chain():
 
     vectorstore = get_vectorstore()
+    if vectorstore is None:
+        return None
 
     retriever = vectorstore.as_retriever(
         search_kwargs={"k": 3}
@@ -202,6 +177,8 @@ for role, message in st.session_state.chat_history:
 
 if uploaded_files:
     qa_chain = get_qa_chain()
+    if qa_chain is None:
+        st.stop()
 
     user_question = st.chat_input("Ask a question about the PDF...")
 
