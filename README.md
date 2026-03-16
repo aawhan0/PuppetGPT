@@ -1,10 +1,22 @@
 # 🤖 PuppetGPT — Chat With Your Documents
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-brightgreen)](https://puppetgpt.streamlit.app/)
+
+---
 
 PuppetGPT is a **Retrieval-Augmented Generation (RAG) powered document assistant** that allows users to upload a PDF and ask questions about its contents.
 
 Instead of relying only on the language model’s internal knowledge, PuppetGPT retrieves relevant sections from the document using semantic search and feeds them to the LLM to generate accurate, grounded responses.
 
 Built with **LangChain, Groq LLaMA models, Chroma vector database, and Streamlit**, this project demonstrates how modern AI applications combine **retrieval systems with large language models** to build reliable document assistants.
+
+---
+## 🚀 Live Demo
+
+You can try PuppetGPT directly in your browser:
+
+https://puppetgpt.streamlit.app/
+
+*Upload a PDF and start asking questions about the document.*
 
 ---
 
