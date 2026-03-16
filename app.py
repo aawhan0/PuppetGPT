@@ -54,9 +54,6 @@ if uploaded_files:
 
 
     # clear old data
-    if os.path.exists("vectorstore"):
-        shutil.rmtree("vectorstore")
-
     if os.path.exists("uploaded_docs"):
         shutil.rmtree("uploaded_docs")
 
@@ -104,6 +101,9 @@ qa_prompt = PromptTemplate(
 
 def get_vectorstore():
 
+    if not os.path.exists("uploaded_docs"):
+        return None
+
     docs = []
 
     for file in os.listdir("uploaded_docs"):
@@ -111,7 +111,6 @@ def get_vectorstore():
         docs.extend(loader.load())
 
     if len(docs) == 0:
-        st.error("No documents were loaded.")
         return None
 
     splitter = RecursiveCharacterTextSplitter(
@@ -126,13 +125,17 @@ def get_vectorstore():
     )
 
     os.makedirs("vectorstore", exist_ok=True)
+
     with st.spinner("Building document index..."):
+
         vectorstore = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
             persist_directory="vectorstore"
         )
+
     return vectorstore
+
 
 def get_qa_chain():
 
