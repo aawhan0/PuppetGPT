@@ -211,13 +211,13 @@ if uploaded_files:
 # Show Sources
 # -------------------------
 
-with st.expander("Sources"):
+        with st.expander("Sources"):
 
-    for doc in result["source_documents"]:
+            for doc in result["source_documents"]:
 
-        source = doc.metadata.get("source", "Unknown document")
-        page = doc.metadata.get("page", "Unknown")
+                source = doc.metadata.get("source", "Unknown document")
+                page = doc.metadata.get("page", "Unknown")
 
-        filename = os.path.basename(source)
+                filename = os.path.basename(source)
 
-        st.write(f"📄 **{filename}** (Page {page})")
+                st.write(f"📄 **{filename}** (Page {page})")
