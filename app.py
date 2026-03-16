@@ -52,6 +52,8 @@ if uploaded_files:
 
 if uploaded_files:
 
+    st.cache_resource.clear()
+
     # clear old data
     if os.path.exists("vectorstore"):
         shutil.rmtree("vectorstore")
@@ -131,9 +133,36 @@ qa_prompt = PromptTemplate(
 # QA Chain
 # -------------------------
 
-def get_qa_chain(pdf_path):
+@st.cache_resource
+def get_vectorstore():
 
-    vectorstore = get_vectorstore(pdf_path)
+    docs = []
+
+    for file in os.listdir("uploaded_docs"):
+
+        loader = PyPDFLoader(os.path.join("uploaded_docs", file))
+        docs.extend(loader.load())
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200
+    )
+
+    chunks = splitter.split_documents(docs)
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+    vectorstore = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory="vectorstore"
+    )
+
+    return vectorstore
+
+    vectorstore = get_vectorstore()
 
     retriever = vectorstore.as_retriever(
         search_kwargs={"k": 3}
