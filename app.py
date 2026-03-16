@@ -22,14 +22,14 @@ st.title("🤖 PuppetGPT")
 st.caption("Chat with your documents using Retrieval-Augmented Generation")
 
 # -------------------------
-# Reset Conversation Button
+# Reset Conversation
 # -------------------------
 
 if st.button("Reset Conversation"):
     st.session_state.chat_history = []
 
 # -------------------------
-# Upload PDF
+# Upload PDFs
 # -------------------------
 
 uploaded_files = st.file_uploader(
@@ -38,7 +38,6 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-# Show uploaded document names in UI
 if uploaded_files:
 
     st.subheader("Loaded Documents")
@@ -52,16 +51,12 @@ if uploaded_files:
 
 if uploaded_files:
 
-
-    # clear old data
     if os.path.exists("uploaded_docs"):
         shutil.rmtree("uploaded_docs")
 
     os.makedirs("uploaded_docs", exist_ok=True)
 
-    # save all uploaded files
     for file in uploaded_files:
-
         pdf_path = os.path.join("uploaded_docs", file.name)
 
         with open(pdf_path, "wb") as f:
@@ -96,13 +91,10 @@ qa_prompt = PromptTemplate(
 )
 
 # -------------------------
-# QA Chain
+# Build Vectorstore
 # -------------------------
 
-def get_vectorstore():
-
-    if not os.path.exists("uploaded_docs"):
-        return None
+def build_vectorstore():
 
     docs = []
 
@@ -124,26 +116,23 @@ def get_vectorstore():
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    os.makedirs("vectorstore", exist_ok=True)
-
     with st.spinner("Building document index..."):
 
         vectorstore = Chroma.from_documents(
             documents=chunks,
-            embedding=embeddings,
-            persist_directory="vectorstore"
+            embedding=embeddings
         )
 
     return vectorstore
 
+# -------------------------
+# Build QA Chain
+# -------------------------
 
-def get_qa_chain():
-
-    vectorstore = get_vectorstore()
-    if vectorstore is None:
-        return None
+def build_qa_chain(vectorstore):
 
     retriever = vectorstore.as_retriever(
+        search_type="mmr",
         search_kwargs={"k": 8, "lambda_mult": 0.5}
     )
 
@@ -160,6 +149,20 @@ def get_qa_chain():
     )
 
     return qa_chain
+
+# -------------------------
+# Initialize Vectorstore Once
+# -------------------------
+
+if uploaded_files and "vectorstore" not in st.session_state:
+
+    st.session_state.vectorstore = build_vectorstore()
+
+    if st.session_state.vectorstore is not None:
+        st.session_state.qa_chain = build_qa_chain(
+            st.session_state.vectorstore
+        )
+
 # -------------------------
 # Chat Memory
 # -------------------------
@@ -167,7 +170,6 @@ def get_qa_chain():
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Display previous messages
 for role, message in st.session_state.chat_history:
     with st.chat_message(role):
         st.write(message)
@@ -176,10 +178,9 @@ for role, message in st.session_state.chat_history:
 # Chat Interface
 # -------------------------
 
-if uploaded_files:
-    qa_chain = get_qa_chain()
-    if qa_chain is None:
-        st.stop()
+if uploaded_files and "qa_chain" in st.session_state:
+
+    qa_chain = st.session_state.qa_chain
 
     user_question = st.chat_input("Ask a question about the PDF...")
 
@@ -190,7 +191,6 @@ if uploaded_files:
         with st.chat_message("user"):
             st.write(user_question)
 
-
         with st.chat_message("assistant"):
 
             with st.spinner("Searching document context..."):
@@ -198,7 +198,6 @@ if uploaded_files:
                 result = qa_chain.invoke({"query": user_question})
                 answer = result["result"]
 
-            # progressive typing effect
             placeholder = st.empty()
             typed_text = ""
 
@@ -209,9 +208,9 @@ if uploaded_files:
 
         st.session_state.chat_history.append(("assistant", answer))
 
-# -------------------------
-# Show Sources
-# -------------------------
+        # -------------------------
+        # Show Sources
+        # -------------------------
 
         with st.expander("Sources"):
 
@@ -222,4 +221,5 @@ if uploaded_files:
 
                 filename = os.path.basename(source)
 
-                st.write(f"📄 **{filename}** (Page {page})")
+                st.markdown(f"📄 **{filename}** (Page {page})")
+                st.write(doc.page_content[:300] + "...")
