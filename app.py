@@ -79,6 +79,12 @@ Rules:
 - Do not repeat unnecessary text.
 - If the question asks for names only, return only the names.
 
+Example format:
+• Item 1
+• Item 2
+• Item 3
+
+
 If the answer is not contained in the document context, say:
 "I cannot find this information in the document."
 
