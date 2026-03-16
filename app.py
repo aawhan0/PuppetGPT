@@ -33,9 +33,25 @@ if st.button("Reset Conversation"):
 # Upload PDF
 # -------------------------
 
-uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
+uploaded_files = st.file_uploader("Upload a PDF", type="pdf", accept_multiple_files=True)
 
-if uploaded_file:
+if uploaded_files:
+
+    if os.path.exists("vectorstore"):
+        shutil.rmtree("vectorstore")
+
+    if os.path.exists("uploaded_docs"):
+        shutil.rmtree("uploaded_docs")
+
+    os.makedirs("uploaded_docs", exist_ok=True)
+
+    for file in uploaded_files:
+        pdf_path = os.path.join("uploaded_docs", file.name)
+
+        with open(pdf_path, "wb") as f:
+            f.write(file.read())
+
+    st.success(f"{len(uploaded_files)} PDFs uploaded successfully!")
 
     # clear old vector database
     if os.path.exists("vectorstore"):
@@ -47,10 +63,10 @@ if uploaded_file:
 
     os.makedirs("uploaded_docs", exist_ok=True)
 
-    pdf_path = os.path.join("uploaded_docs", uploaded_file.name)
+    pdf_path = os.path.join("uploaded_docs", uploaded_files.name)
 
     with open(pdf_path, "wb") as f:
-        f.write(uploaded_file.read())
+        f.write(uploaded_files.read())
 
     st.success("PDF uploaded successfully!")
 
@@ -60,8 +76,10 @@ if uploaded_file:
 
 def get_vectorstore(pdf_path):
 
-    loader = PyPDFLoader(pdf_path)
-    docs = loader.load()
+    docs = []
+    for file in os.listdir("uploaded_docs"):
+        loader = PyPDFLoader(os.path.join("uploaded_docs", file))
+        docs.extend(loader.load())
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -157,7 +175,7 @@ for role, message in st.session_state.chat_history:
 # Chat Interface
 # -------------------------
 
-if uploaded_file:
+if uploaded_files:
 
     user_question = st.chat_input("Ask a question about the PDF...")
 
