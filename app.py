@@ -144,7 +144,7 @@ def get_qa_chain():
         return None
 
     retriever = vectorstore.as_retriever(
-        search_kwargs={"k": 3}
+        search_kwargs={"k": 8, "lambda_mult": 0.5}
     )
 
     llm = ChatGroq(
