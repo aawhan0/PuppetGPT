@@ -1,9 +1,13 @@
 import os
+import shutil
+import time
 import streamlit as st
 from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
@@ -14,24 +18,30 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 load_dotenv()
 
 st.set_page_config(page_title="PuppetGPT", page_icon="🤖")
+
 st.title("🤖 PuppetGPT")
 st.caption("Chat with your documents using Retrieval-Augmented Generation")
+
+# -------------------------
+# Reset Conversation Button
+# -------------------------
+
+if st.button("Reset Conversation"):
+    st.session_state.chat_history = []
 
 # -------------------------
 # Upload PDF
 # -------------------------
 
-import shutil
-
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
 if uploaded_file:
 
-    # reset vector database
+    # clear old vector database
     if os.path.exists("vectorstore"):
         shutil.rmtree("vectorstore")
 
-    # reset uploaded documents
+    # clear old uploaded docs
     if os.path.exists("uploaded_docs"):
         shutil.rmtree("uploaded_docs")
 
@@ -43,6 +53,7 @@ if uploaded_file:
         f.write(uploaded_file.read())
 
     st.success("PDF uploaded successfully!")
+
 # -------------------------
 # Vectorstore Builder
 # -------------------------
@@ -65,15 +76,16 @@ def get_vectorstore(pdf_path):
 
     vectorstore = Chroma.from_documents(
         documents=chunks,
-        embedding=embeddings
+        embedding=embeddings,
+        persist_directory="vectorstore"
     )
 
     return vectorstore
 
+
 # -------------------------
-# QA Chain
+# Prompt Template
 # -------------------------
-from langchain.prompts import PromptTemplate
 
 template = """
 You are a document assistant.
@@ -97,13 +109,16 @@ qa_prompt = PromptTemplate(
     input_variables=["context", "question"]
 )
 
+# -------------------------
+# QA Chain
+# -------------------------
 
 def get_qa_chain(pdf_path):
 
     vectorstore = get_vectorstore(pdf_path)
 
     retriever = vectorstore.as_retriever(
-        search_kwargs={"k":3}
+        search_kwargs={"k": 3}
     )
 
     llm = ChatGroq(
@@ -111,14 +126,32 @@ def get_qa_chain(pdf_path):
         groq_api_key=os.getenv("GROQ_API_KEY")
     )
 
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True
+    )
+
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=retriever,
+        memory=memory,
         chain_type_kwargs={"prompt": qa_prompt},
         return_source_documents=True
     )
 
     return qa_chain
+
+# -------------------------
+# Chat Memory
+# -------------------------
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# Display previous messages
+for role, message in st.session_state.chat_history:
+    with st.chat_message(role):
+        st.write(message)
 
 # -------------------------
 # Chat Interface
@@ -130,23 +163,22 @@ if uploaded_file:
 
     if user_question:
 
-        # Show user message
+        st.session_state.chat_history.append(("user", user_question))
+
         with st.chat_message("user"):
             st.write(user_question)
 
         qa_chain = get_qa_chain(pdf_path)
 
         with st.chat_message("assistant"):
+
             with st.spinner("Searching document context..."):
 
                 result = qa_chain.invoke({"query": user_question})
-
                 answer = result["result"]
 
-            import time
-
+            # progressive typing effect
             placeholder = st.empty()
-
             typed_text = ""
 
             for char in answer:
@@ -154,6 +186,9 @@ if uploaded_file:
                 placeholder.markdown(typed_text)
                 time.sleep(0.01)
 
+        st.session_state.chat_history.append(("assistant", answer))
+
+        # show retrieved chunks
         with st.expander("Retrieved Context"):
             for doc in result["source_documents"]:
                 st.write(doc.page_content)
