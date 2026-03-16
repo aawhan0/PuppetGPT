@@ -9,3 +9,7 @@ sentence-transformers
 transformers
 pypdf
 python-dotenv
+chromadb==0.4.24
+sentence-transformers
+pypdf
+langchain-community
