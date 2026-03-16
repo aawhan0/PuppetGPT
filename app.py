@@ -75,14 +75,23 @@ Answer the question ONLY using the provided context.
 
 Rules:
 - Use clear formatting.
-- Use bullet points for lists.
+- Use bullet points ONLY when the answer contains multiple items.
+- If the answer is a single item (for example: a name), return it as plain text with no bullet point.
+- Each bullet point must be on a new line.
+- Do not place multiple bullet points on the same line.
 - Do not repeat unnecessary text.
 - If the question asks for names only, return only the names.
+- Fix obvious spacing errors from PDF extraction (example: "MomentX R T" → "MomentX RT").
 
-Example format:
-• Item 1
-• Item 2
-• Item 3
+Example formats:
+
+Single answer:
+Aawhan Vyas
+
+List answer:
+• PuppetGPT
+• ALIMF
+• MomentX RT
 
 
 If the answer is not contained in the document context, say:
@@ -209,6 +218,9 @@ if uploaded_files and "qa_chain" in st.session_state:
 
                 result = qa_chain.invoke({"query": user_question})
                 answer = result["result"]
+
+                # Fix bullet formatting
+                answer = answer.replace("• ", "\n• ").strip()
 
             placeholder = st.empty()
             typed_text = ""
