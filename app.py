@@ -207,7 +207,17 @@ if uploaded_files:
 
         st.session_state.chat_history.append(("assistant", answer))
 
-        # show retrieved chunks
-        with st.expander("Retrieved Context"):
-            for doc in result["source_documents"]:
-                st.write(doc.page_content)
+# -------------------------
+# Show Sources
+# -------------------------
+
+with st.expander("Sources"):
+
+    for doc in result["source_documents"]:
+
+        source = doc.metadata.get("source", "Unknown document")
+        page = doc.metadata.get("page", "Unknown")
+
+        filename = os.path.basename(source)
+
+        st.write(f"📄 **{filename}** (Page {page})")
