@@ -21,9 +21,19 @@ st.caption("Chat with your documents using Retrieval-Augmented Generation")
 # Upload PDF
 # -------------------------
 
+import shutil
+
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
 if uploaded_file:
+
+    # reset vector database
+    if os.path.exists("vectorstore"):
+        shutil.rmtree("vectorstore")
+
+    # reset uploaded documents
+    if os.path.exists("uploaded_docs"):
+        shutil.rmtree("uploaded_docs")
 
     os.makedirs("uploaded_docs", exist_ok=True)
 
@@ -33,12 +43,10 @@ if uploaded_file:
         f.write(uploaded_file.read())
 
     st.success("PDF uploaded successfully!")
-
 # -------------------------
 # Vectorstore Builder
 # -------------------------
 
-@st.cache_resource
 def get_vectorstore(pdf_path):
 
     loader = PyPDFLoader(pdf_path)
@@ -65,13 +73,37 @@ def get_vectorstore(pdf_path):
 # -------------------------
 # QA Chain
 # -------------------------
+from langchain.prompts import PromptTemplate
+
+template = """
+You are a document assistant.
+
+Answer the question ONLY using the provided context.
+
+If the answer is not contained in the document context, say:
+"I cannot find this information in the document."
+
+Context:
+{context}
+
+Question:
+{question}
+
+Answer:
+"""
+
+qa_prompt = PromptTemplate(
+    template=template,
+    input_variables=["context", "question"]
+)
+
 
 def get_qa_chain(pdf_path):
 
     vectorstore = get_vectorstore(pdf_path)
 
     retriever = vectorstore.as_retriever(
-        search_kwargs={"k":4}
+        search_kwargs={"k":3}
     )
 
     llm = ChatGroq(
@@ -82,6 +114,7 @@ def get_qa_chain(pdf_path):
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=retriever,
+        chain_type_kwargs={"prompt": qa_prompt},
         return_source_documents=True
     )
 
@@ -93,20 +126,20 @@ def get_qa_chain(pdf_path):
 
 if uploaded_file:
 
-    prompt = st.chat_input("Ask a question about the PDF...")
+    user_question = st.chat_input("Ask a question about the PDF...")
 
-    if prompt:
+    if user_question:
 
         # Show user message
         with st.chat_message("user"):
-            st.write(prompt)
+            st.write(user_question)
 
         qa_chain = get_qa_chain(pdf_path)
 
         with st.chat_message("assistant"):
             with st.spinner("Searching document context..."):
 
-                result = qa_chain.invoke({"query": prompt})
+                result = qa_chain.invoke({"query": user_question})
 
                 answer = result["result"]
 
@@ -121,6 +154,6 @@ if uploaded_file:
                 placeholder.markdown(typed_text)
                 time.sleep(0.01)
 
-        with st.expander("Sources"):
+        with st.expander("Retrieved Context"):
             for doc in result["source_documents"]:
-                st.write(doc.metadata)
+                st.write(doc.page_content)
