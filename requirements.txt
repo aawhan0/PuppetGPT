@@ -1,11 +1,11 @@
 streamlit
-langchain
-langchain-core
-langchain-community
-langchain-groq
+langchain==0.1.17
+langchain-core==0.1.48
+langchain-community==0.0.36
+langchain-groq==0.1.3
+langchain-text-splitters==0.0.2
 chromadb
 sentence-transformers
 transformers
 pypdf
 python-dotenv
-langchain-text-splitters
