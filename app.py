@@ -33,10 +33,27 @@ if st.button("Reset Conversation"):
 # Upload PDF
 # -------------------------
 
-uploaded_files = st.file_uploader("Upload a PDF", type="pdf", accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Upload PDFs",
+    type="pdf",
+    accept_multiple_files=True
+)
+
+# Show uploaded document names in UI
+if uploaded_files:
+
+    st.subheader("Loaded Documents")
+
+    for file in uploaded_files:
+        st.write("📄", file.name)
+
+# -------------------------
+# Save Uploaded Files
+# -------------------------
 
 if uploaded_files:
 
+    # clear old data
     if os.path.exists("vectorstore"):
         shutil.rmtree("vectorstore")
 
@@ -45,31 +62,15 @@ if uploaded_files:
 
     os.makedirs("uploaded_docs", exist_ok=True)
 
+    # save all uploaded files
     for file in uploaded_files:
+
         pdf_path = os.path.join("uploaded_docs", file.name)
 
         with open(pdf_path, "wb") as f:
             f.write(file.read())
 
     st.success(f"{len(uploaded_files)} PDFs uploaded successfully!")
-
-    # clear old vector database
-    if os.path.exists("vectorstore"):
-        shutil.rmtree("vectorstore")
-
-    # clear old uploaded docs
-    if os.path.exists("uploaded_docs"):
-        shutil.rmtree("uploaded_docs")
-
-    os.makedirs("uploaded_docs", exist_ok=True)
-
-    pdf_path = os.path.join("uploaded_docs", uploaded_files.name)
-
-    with open(pdf_path, "wb") as f:
-        f.write(uploaded_files.read())
-
-    st.success("PDF uploaded successfully!")
-
 # -------------------------
 # Vectorstore Builder
 # -------------------------
