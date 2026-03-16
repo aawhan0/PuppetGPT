@@ -15,7 +15,7 @@ load_dotenv()
 
 st.set_page_config(page_title="PuppetGPT", page_icon="🤖")
 st.title("🤖 PuppetGPT")
-st.write("Upload a PDF and ask questions about it.")
+st.caption("Chat with your documents using Retrieval-Augmented Generation")
 
 # -------------------------
 # Upload PDF
@@ -97,14 +97,29 @@ if uploaded_file:
 
     if prompt:
 
+        # Show user message
+        with st.chat_message("user"):
+            st.write(prompt)
+
         qa_chain = get_qa_chain(pdf_path)
 
-        result = qa_chain.invoke({"query": prompt})
+        with st.chat_message("assistant"):
+            with st.spinner("Searching document context..."):
 
-        answer = result["result"]
+                result = qa_chain.invoke({"query": prompt})
 
-        st.write("### Answer")
-        st.write(answer)
+                answer = result["result"]
+
+            import time
+
+            placeholder = st.empty()
+
+            typed_text = ""
+
+            for char in answer:
+                typed_text += char
+                placeholder.markdown(typed_text)
+                time.sleep(0.01)
 
         with st.expander("Sources"):
             for doc in result["source_documents"]:
