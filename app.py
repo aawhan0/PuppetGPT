@@ -162,6 +162,9 @@ def get_vectorstore():
 
     return vectorstore
 
+@st.cache_resource
+def get_qa_chain():
+
     vectorstore = get_vectorstore()
 
     retriever = vectorstore.as_retriever(
@@ -181,7 +184,6 @@ def get_vectorstore():
     )
 
     return qa_chain
-
 # -------------------------
 # Chat Memory
 # -------------------------
@@ -199,6 +201,7 @@ for role, message in st.session_state.chat_history:
 # -------------------------
 
 if uploaded_files:
+    qa_chain = get_qa_chain()
 
     user_question = st.chat_input("Ask a question about the PDF...")
 
@@ -209,7 +212,6 @@ if uploaded_files:
         with st.chat_message("user"):
             st.write(user_question)
 
-        qa_chain = get_qa_chain(pdf_path)
 
         with st.chat_message("assistant"):
 
