@@ -36,22 +36,22 @@ This design significantly improves **accuracy, reliability, and transparency**.
 
 # 🚀 Features
 
-📄 **Upload Any PDF**
+📄 **Upload Any PDF** -
 Upload any document and instantly start querying it.
 
-🧠 **Retrieval-Augmented Generation (RAG)**
+🧠 **Retrieval-Augmented Generation (RAG)** -
 Responses are generated using retrieved document context.
 
-⚡ **Fast LLM Responses**
+⚡ **Fast LLM Responses** -
 Powered by **Groq’s ultra-fast LLaMA models**.
 
-🔍 **Semantic Document Search**
+🔍 **Semantic Document Search** -
 Embeddings + vector similarity search retrieve relevant document chunks.
 
-📚 **Source Transparency**
+📚 **Source Transparency** -
 Shows which document sections were used to generate the answer.
 
-🖥 **Interactive Streamlit Interface**
+🖥 **Interactive Streamlit Interface** -
 Clean and simple UI for chatting with documents.
 
 ---
@@ -194,11 +194,11 @@ This project demonstrates important AI engineering concepts:
 
 # 🌟 Example Use Cases
 
-• Chat with research papers
-• Extract insights from reports
-• Query technical documentation
-• Summarize books or PDFs
-• Build internal knowledge assistants
+* Chat with research papers
+* Extract insights from reports
+* Query technical documentation
+* Summarize books or PDFs
+* Build internal knowledge assistants
 
 ---
 # 🧩 Engineering Challenges & Fixes
