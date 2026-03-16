@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 from langchain.chains import RetrievalQA
-from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -145,15 +144,9 @@ def get_qa_chain(pdf_path):
         groq_api_key=os.getenv("GROQ_API_KEY")
     )
 
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        return_messages=True
-    )
-
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         retriever=retriever,
-        memory=memory,
         chain_type_kwargs={"prompt": qa_prompt},
         return_source_documents=True
     )
