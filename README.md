@@ -201,6 +201,80 @@ This project demonstrates important AI engineering concepts:
 • Build internal knowledge assistants
 
 ---
+# 🧩 Engineering Challenges & Fixes
+
+While building PuppetGPT, several practical engineering issues arose related to environment setup, dependency management, RAG architecture, and LLM behavior.
+
+**1. Python Compatibility**
+
+Issue: Streamlit Cloud defaulted to Python 3.14, causing compatibility issues with AI libraries.
+
+Fix: Deployment environment was changed to Python 3.11, which is currently the most stable version for LangChain-based applications.
+
+**2. LangChain Package Fragmentation**
+
+Issue: LangChain was split into multiple packages, causing import errors.
+
+Fix: Updated imports to the modular architecture:
+
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import Chroma
+
+**3. Dependency Conflicts**
+
+Issue: Version conflicts between LangChain-related packages caused installation failures.
+
+Fix: Rebuilt the Python virtual environment and reinstalled dependencies to ensure clean resolution.
+
+**4. Groq Model Deprecation**
+
+Issue: The original model llama3-8b-8192 was deprecated.
+
+Fix: Updated to:
+
+model_name="llama-3.1-8b-instant"
+
+**5. RetrievalQA Memory Conflict**
+
+Issue: LangChain memory conflicted with RetrievalQA because the chain returns multiple outputs.
+
+Fix: Chat history was managed using Streamlit session state:
+
+st.session_state.chat_history
+**6. Vectorstore Rebuild Errors**
+
+Issue: Rebuilding the Chroma vector database on every query caused runtime errors.
+
+Fix: Vectorstore creation was cached so embeddings are generated once per document upload.
+
+**7. Code Architecture Bug**
+
+Issue: Some logic was placed after a return statement, making it unreachable.
+
+Fix: Refactored the architecture into two functions:
+
+get_vectorstore()
+get_qa_chain()
+
+**8. Hallucination Mitigation**
+
+Issue: The model occasionally generated answers not present in the document.
+
+Fix: Added a strict prompt rule requiring the model to respond:
+
+"I cannot find this information in the document."
+
+when the answer is not in the retrieved context.
+
+**9. Output Formatting Issues**
+
+Issue: The model sometimes produced compressed bullet lists.
+
+Fix: Added a formatting step before displaying answers:
+
+answer = answer.replace("• ", "\n• ").strip()
+---
 
 # 🔮 Future Improvements
 
