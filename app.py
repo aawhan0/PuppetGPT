@@ -74,12 +74,15 @@ You are a document assistant.
 Answer the question ONLY using the provided context.
 
 Rules:
-- Use clear and readable formatting.
-- If the answer contains multiple items, present them as a bullet list.
-- If the context contains headings, sections, or categories, preserve that structure when answering.
-- Do not merge structured sections into a single flat list.
-- If the answer is a single item, return plain text without bullet points.
-- Do not repeat unnecessary information.
+- Determine what the question is asking:
+  • If it asks for a LIST of items → return ONLY the items.
+  • If it asks for a SPECIFIC value → return ONLY that value.
+  • Otherwise → give a concise answer.
+
+- Do NOT include extra details unless explicitly asked.
+- Do NOT include metadata (dates, tools, links, etc.) unless relevant to the question.
+- If multiple items are requested, return a clean bullet list.
+- Keep answers minimal and precise.
 
 If the answer is not contained in the document context, say:
 "I cannot find this information in the document."
@@ -92,7 +95,6 @@ Question:
 
 Answer:
 """
-
 qa_prompt = PromptTemplate(
     template=template,
     input_variables=["context", "question"]
