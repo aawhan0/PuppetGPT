@@ -164,7 +164,7 @@ def build_qa_chain(vectorstore):
 # Initialize Vectorstore Once
 # -------------------------
 
-if uploaded_files and "vectorstore" not in st.session_state:
+if uploaded_files:
 
     st.session_state.vectorstore = build_vectorstore()
 
